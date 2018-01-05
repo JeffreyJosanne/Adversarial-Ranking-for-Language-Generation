@@ -3,9 +3,7 @@
 import os
 import random
 import math
-
 import tqdm
-
 import numpy as np
 import torch
 class GenDataIter(object):
@@ -55,12 +53,17 @@ class GenDataIter(object):
 
 class DisDataIter(object):
     """ Toy data iter to load digits"""
-    def __init__(self, real_data_file, fake_data_file, batch_size):
+    def __init__(self, real_data_file, fake_data_file, batch_size, ref_size= None):
         super(DisDataIter, self).__init__()
+        if ref_size != None:
+            self.ref_size = ref_size
+        else:
+            self.ref_size = None
         self.batch_size = batch_size
         real_data_lis = self.read_file(real_data_file)
         fake_data_lis = self.read_file(fake_data_file)
         self.data = real_data_lis + fake_data_lis
+        self.references = real_data_lis
         self.labels = [1 for _ in range(len(real_data_lis))] +\
                         [0 for _ in range(len(fake_data_lis))]
         self.pairs = zip(self.data, self.labels)
@@ -92,7 +95,13 @@ class DisDataIter(object):
         data = torch.LongTensor(np.asarray(data, dtype='int64'))
         label = torch.LongTensor(np.asarray(label, dtype='int64'))
         self.idx += self.batch_size
-        return data, label
+        return data, label, self.reference_picker()
+
+    def reference_picker(self):
+        reference = []
+        for _ in range(self.ref_size):
+            reference.append(self.references[random.randint(0, len(self.references) - 1)])
+        return np.array(reference)
 
     def read_file(self, data_file):
         with open(data_file, 'r') as f:
