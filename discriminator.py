@@ -9,6 +9,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+def cos_similarity(gamma, y_ref, y_sent):
+    return gamma * cosine_similarity(y_ref, y_sent)
+
 class Discriminator(nn.Module):
     """A CNN for text classification
 
@@ -17,6 +20,8 @@ class Discriminator(nn.Module):
 
     def __init__(self, num_classes, vocab_size, emb_dim, filter_sizes, num_filters, dropout, batch = 32, ref = 16):
         super(Discriminator, self).__init__()
+        self.batch = batch
+        self.ref = ref
         self.emb = nn.Embedding(vocab_size, emb_dim)
         self.convs = nn.ModuleList([
             nn.Conv2d(1, n, (f, emb_dim)) for (n, f) in zip(num_filters, filter_sizes)
@@ -51,15 +56,15 @@ class Discriminator(nn.Module):
         pred_ref = F.sigmoid(highway_ref) *  F.relu(highway_ref) + (1. - F.sigmoid(highway_ref)) * pred_ref
         pred_ref = self.softmax(self.lin(self.dropout(pred_ref)))
         values = []
-        for i in range(batch):
+        for i in range(self.batch):
             value = 0
-            for j in range(ref):
-                value += cos_similarity(pred_ref[j], pred[i])
+            for j in range(self.ref):
+                value += cos_similarity(1.0, pred_ref[j], pred[i])
             values.append(value)
         total = sum(values)
-        for i in range(batch):
+        for i in range(self.batch):
             values[i] = values[i] / total
-        pred = torch.from_numpy(np.asarray(values))
+        pred = torch.from_numpy(np.log(np.asarray(values)))
         return pred
 
     def init_parameters(self):
