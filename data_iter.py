@@ -58,7 +58,7 @@ class DisDataIter(object):
         if ref_size != None:
             self.ref_size = ref_size
         else:
-            self.ref_size = None
+            self.ref_size = 16       # reduce the size for fastening the training
         self.batch_size = batch_size
         real_data_lis = self.read_file(real_data_file)
         fake_data_lis = self.read_file(fake_data_file)
