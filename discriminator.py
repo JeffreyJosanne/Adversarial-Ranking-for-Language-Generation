@@ -59,7 +59,7 @@ class Discriminator(nn.Module):
         for i in range(self.batch):
             value = 0
             for j in range(self.ref):
-                value += cos_similarity(1.0, pred_ref[j], pred[i])
+                value += nn.Softmax(cos_similarity(1.0, pred_ref[j], pred[i]))
             values.append(value)
         total = sum(values)
         for i in range(self.batch):
